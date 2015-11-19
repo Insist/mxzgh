@@ -14,10 +14,10 @@
         <spring.version>4.1.4.RELEASE</spring.version>
         <hibernate.version>4.3.8.Final</hibernate.version>
         <jackson.version>2.5.0</jackson.version>
+        <maven.war.plugin.version>2.5</maven.war.plugin.version>
     </properties>
 
     <dependencies>
-
         <!-- junit -->
         <dependency>
             <groupId>junit</groupId>
@@ -211,6 +211,26 @@
                 </configuration>
             </plugin>
 
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>${maven.war.plugin.version}</version>
+                <configuration>
+                    <outputDirectory>${project.build.directory}</outputDirectory>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                        </manifest>
+                    </archive>
+                    <webResources>
+                        <resource>
+                            <directory>web/WEB-INF</directory>
+                            <targetPath>WEB-INF</targetPath>
+                        </resource>
+                    </webResources>
+                </configuration>
+            </plugin>
             <!-- 部署至本机 -->
             <!--<plugin>-->
                 <!--<groupId>org.codehaus.cargo</groupId>-->

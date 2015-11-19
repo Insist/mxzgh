@@ -1,9 +1,9 @@
 package com.mxzgh;
 
-import com.mxzgh.dao.TestDao;
 import com.mxzgh.entity.TestEntity;
 import com.mxzgh.service.TestService;
 import org.apache.log4j.Logger;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,5 +39,6 @@ public class DaoTest {
         Object id = testService.save(test);
         LOGGER.info(JSON.toJSONString(id));
     }
+
 
 }
