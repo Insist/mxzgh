@@ -52,12 +52,12 @@ public class Gameboard {
 
     private boolean startRound() {
         initRound();
-
-        RoundResult rr = null;
-        while (rr==null){
-            this.actionPlayer.startTurn(this);
-        }
-        return checkRoundEnd();
+        RoundResult rr = new RoundResult();
+        do {
+            rr = this.actionPlayer.startTurn(this,rr);
+            this.actionPlayer = rr.getNextPlayer();
+        }while (!rr.getGameOverFlag());
+        return countRoundEnd();
     }
 
     private void initRound() {
@@ -75,8 +75,12 @@ public class Gameboard {
         nextPoint = 34*((13-total)%4)+total*2;
         beforePoint = nextPoint-1>=0?nextPoint-1:135;
         //
-        for(Player player:players){
-            player.addHandCard(yamaCards.get(nextPoint));
+        for(int i =0;i<3;i++){
+            for(Player player:players){
+                for(int j =0;j<4;i++) {
+                    player.addHandCard(yamaCards.get(popNextPoint()));
+                }
+            }
         }
     }
     public int popNextPoint(){
@@ -91,8 +95,15 @@ public class Gameboard {
         return old;
     }
 
-    private boolean checkRoundEnd() {
+    private boolean countRoundEnd() {
         return false;
     }
 
+    public Card getNewCard() {
+        return yamaCards.get(popNextPoint());
+    }
+
+    public Card getGangCard(){
+        return yamaCards.get(popBeforePoint());
+    }
 }

@@ -13,6 +13,8 @@ public class Player {
 
     private List<Card> handCards;
 
+
+
     public static Player initPlayer(Integer startScore,GamePosition pp) {
         Player player = new Player();
         PlayerInfo pi = new PlayerInfo();
@@ -24,7 +26,25 @@ public class Player {
     }
 
 
-    public void startTurn(Gameboard gameboard) {
+    public RoundResult startTurn(Gameboard gameboard, RoundResult rr) {
+        checkAndSendAction(gameboard,rr,gameboard.getNewCard());
+        return null;
+    }
+
+    private void checkAndSendAction(Gameboard gameboard, RoundResult rr, Card newCard) {
+        //check can win
+        //check can richi
+        //check can gang
+        //check can skill
+        //sendMessage(card,action(1,2,3,4,5))
+    }
+
+    public boolean checkOtherPlayerAction(){
+        //can eat
+        //can peng
+        //can gang
+        //skill
+        return false;
     }
 
     public PlayerInfo getPlayerInfo() {
