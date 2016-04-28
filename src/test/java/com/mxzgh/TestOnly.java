@@ -9,6 +9,8 @@ import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.text.MessageFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 /**
  * Created by Administrator on 2016/1/5.
@@ -26,6 +28,7 @@ public class TestOnly {
     static Logger logger = Logger.getLogger(TestOnly.class);
 
     public static void main(String[] args) throws IOException {
-        logger.info("1234567");
+        String src = "../../img/1125/33/a582f7fd4b11349ef1a022604c0d5856.jpg";
+        System.out.println(src.replace("../../img","http://xs.dmzj.com/img"));
     }
 }

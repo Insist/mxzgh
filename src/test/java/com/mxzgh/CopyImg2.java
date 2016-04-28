@@ -36,7 +36,7 @@ public class CopyImg2 {
 
     public static void main(String[] args) {
         String uri = "http://www.yidm.com/article/html/{0}/{1,number,#}/";
-        for(int i = 3;i<1980;i++){
+        for(int i = 1172;i<1173;i++){
             try {
                 printUrl( MessageFormat.format(uri, i / 1000, i));
                 Thread.sleep(1000);

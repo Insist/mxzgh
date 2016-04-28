@@ -46,7 +46,7 @@ public class CopyBookFromOther2 {
 
     public static void main(String[] args) {
         String uri = "http://www.yidm.com/article/html/{0}/{1,number,#}/";
-        for(int i = 1970;i<1973;i++){
+        for(int i = 2050;i<2100;i++){
                 try {
                     boolean result = false;
                     for(int j = 1;j<4;j++){
@@ -157,6 +157,7 @@ public class CopyBookFromOther2 {
             params.add(new BasicNameValuePair("name", name));
             params.add(new BasicNameValuePair("auth", auth));
             params.add(new BasicNameValuePair("wenku", wenku));
+            params.add(new BasicNameValuePair("source", "yidm"));
             httpPost.setHeader("User-Agent","Mozilla");
             httpPost.setEntity(new UrlEncodedFormEntity(params, Consts.UTF_8));
             HttpResponse response = client.execute(httpPost);
@@ -180,7 +181,7 @@ public class CopyBookFromOther2 {
             params.add(new BasicNameValuePair("book", name));
             params.add(new BasicNameValuePair("chapter", chapter));
             params.add(new BasicNameValuePair("text", text));
-            params.add(new BasicNameValuePair("lastId", url));
+            params.add(new BasicNameValuePair("uri", url));
             httpPost.setHeader("User-Agent", "Mozilla");
 //            params.add(new BasicNameValuePair("volume", volumeName));
 

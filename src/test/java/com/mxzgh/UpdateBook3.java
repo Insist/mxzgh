@@ -14,7 +14,6 @@ import org.apache.http.util.EntityUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
@@ -28,7 +27,7 @@ import java.util.regex.Pattern;
 /**
  * Created by Administrator on 2016/1/4.
  */
-public class UpdateBook2 {
+public class UpdateBook3 {
 
     static CloseableHttpClient client ;
     static SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss -- ");
@@ -39,15 +38,15 @@ public class UpdateBook2 {
         System.setProperty("org.apache.commons.logging.simplelog.log.org.apache.commons.httpclient", "info");
         client = HttpClientBuilder.create().build();
     }
-    static Pattern p = Pattern.compile("http://www.yidm.com/article/html/[0-9]/[0-9]+/[0-9]+[.]html");
+    static Pattern p = Pattern.compile("/[0-9]+/[0-9]+/[0-9]+[.]shtml");
 
     public static void main(String[] args) {
-        String uri = "http://www.yidm.com/article/html/{0}/{1,number,#}/";
-        for(int i = 2100;i>=1;i--){
+        String uri = "http://xs.dmzj.com/{0,number,#}/index.shtml";
+        for(int i = 1313;i>=1313;i--){
             try {
                 boolean result = false;
                 for(int j = 1;j<4;j++){
-                    result = printUrl(MessageFormat.format(uri, i / 1000, i),i);
+                    result = printUrl(MessageFormat.format(uri, i),i);
                     if(result)break;
                     System.out.println("retry id:" + i + ";times=" + j);
                     Thread.sleep(1000);
@@ -67,42 +66,47 @@ public class UpdateBook2 {
             String rs = EntityUtils.toString(response.getEntity(), "GBK");
             Document dom = Jsoup.parse(rs);
             String info = dom.getElementsByTag("title").html();
-            String title = info.split(" - ")[1];
-            String auth = info.split(" - ")[2];
-            String wenku = info.split(" - ")[3];
+//            System.out.println(info);
+            String title = info.split("\\|")[0];
+            String auth = info.split("\\|")[4];
+            String wenku = info.split("\\|")[5];
             System.out.println(title+"-"+auth);
-
             String lastChaUrl = "";
             for(int i = 1;i<4;i++){
                 lastChaUrl = getLast(title);
                 if(lastChaUrl.length()>0)break;
             }
+
             if(lastChaUrl.indexOf("error")!=-1){
                 return true;
             }
+            System.out.println(lastChaUrl);
             lastChaUrl = lastChaUrl.split("-")[1];
             if(lastChaUrl.length()<1){
                 return true;
             }
-
             boolean start = false;
             String chaFirstName = "";
-            for(Element d:dom.getElementsByTag("a")){
-                String href = d.attr("href");
-                if(p.matcher(href).matches()){
-                    if(href.equals(lastChaUrl)) {
-                        start =true;
-                        continue;
-                    } else if(!start){
-                        continue;
+            for(Element e:dom.getElementsByClass("download_rtx")) {
+                for (Element d : e.getElementsByTag("a")) {
+                    String href = d.attr("href");
+                    if (p.matcher(href).matches()) {
+                        System.out.println(href);
+                        if(href.equals(lastChaUrl)) {
+                            start =true;
+                            continue;
+                        } else if(!start){
+                            continue;
+                        }
+                        boolean rss = false;
+                        for (int i = 1; i < 4; i++) {
+                            rss = printPage(uri, href, "", title);
+                            if (rss)
+                                break;
+                        }
                     }
-                    boolean rss = false;
-                    for(int i = 1;i<4;i++) {
-                        rss = printPage(uri, href, "", title);
-                        if(rss)break;
-                    }
-                }
 
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -118,7 +122,7 @@ public class UpdateBook2 {
             params.add(new BasicNameValuePair("book", name));
             params.add(new BasicNameValuePair("start", "1970"));
             params.add(new BasicNameValuePair("end", "3000"));
-            params.add(new BasicNameValuePair("source", "yidm"));
+            params.add(new BasicNameValuePair("source", "dmzj"));
             httpPost.setEntity(new UrlEncodedFormEntity(params, Consts.UTF_8));
             httpPost.setHeader("User-Agent", "Mozilla");
             HttpResponse response = client.execute(httpPost);
@@ -130,26 +134,55 @@ public class UpdateBook2 {
     }
 
     private static boolean printPage(String uri, String href, String chaName, String title) {
-        HttpGet httpPost = new HttpGet(href);
+        String url = "http://xs.dmzj.com";
+        String text = "";
+        String allName = "";
+        String chaIndex = "";
         try {
-            HttpResponse response = client.execute(httpPost);
-            String rs = EntityUtils.toString(response.getEntity(), "GBK");
-            Document dom = Jsoup.parse(rs);
-            Element e = dom.getElementsByClass("bd").get(0);
-            String allName = e.getElementsByTag("h4").html();
-            chaName = allName.replace(chaName,"");
-            String text = e.html().replace("<br />", "");
-            boolean result = false;
-            if(text.length()<75000){
-                for(int i = 1;i<4;i++){
-                    result = uploadChapter(title,allName,chaName,href,text);
-                    if(result)break;
+            for(int q = 0;q<20;q++) {
+                if(q>0){
+                    url += href+"_"+q;
+                }else{
+                    url = url+href;
                 }
-            }else {
-                for(int j=0;j<text.length()/75000+1;j++){
-                    for(int i = 1;i<4;i++){
-                        result = uploadChapter(title,allName+"("+(j+1)+")",chaName,href,text.substring(j*75000,Math.min((j+1)*75000,text.length()-1)));
-                        if(result)break;
+                HttpGet httpPost = new HttpGet(url);
+                HttpResponse response = client.execute(httpPost);
+                String rs = EntityUtils.toString(response.getEntity(), "GBK");
+                Document dom = Jsoup.parse(rs);
+                String info = dom.getElementsByTag("title").html();
+                if(info.indexOf("页面找不到")!=-1){
+                    break;
+                }
+                if(q==0){
+                    chaIndex = info.split("-")[0];
+                    chaName = info.split("-")[1];
+                    chaIndex = chaIndex+" "+chaName;
+                }
+                for(Element e:dom.getElementById("novel_contents").getElementsByTag("img")){
+                    e.attr("src",e.attr("src").replace("../../img","http://xs.dmzj.com/img"));
+                }
+                if(dom.getElementById("novel_contents")!=null){
+                    text+=dom.getElementById("novel_contents").html();
+                }
+//                chaName = allName.replace(chaName, "");
+            }
+//            System.out.println(text);
+            text = text.replace("<br />", "");
+            boolean result = false;
+            if (text.length() < 75000) {
+                for (int i = 1; i < 4; i++) {
+                    result = uploadChapter(title, allName, chaName, href, text);
+                    if (result)
+                        break;
+                }
+            } else {
+                for (int j = 0; j < text.length() / 75000 + 1; j++) {
+                    for (int i = 1; i < 4; i++) {
+                        result = uploadChapter(title, allName + "(" + (j + 1) + ")", chaName,
+                                href, text.substring(j * 75000,
+                                        Math.min((j + 1) * 75000, text.length() - 1)));
+                        if (result)
+                            break;
                     }
                 }
             }

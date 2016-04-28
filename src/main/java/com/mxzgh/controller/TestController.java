@@ -30,5 +30,9 @@ public class TestController {
         return "/index";
     }
 
+    @RequestMapping("/demo")
+    public String demo(Long id){
+        return "/demo";
+    }
 
 }

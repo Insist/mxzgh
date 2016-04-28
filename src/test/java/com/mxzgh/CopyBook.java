@@ -36,7 +36,7 @@ public class CopyBook {
 
     public static void main(String[] args) {
         String uri = "http://www.wenku8.com/novel/{0}/{1,number,#}/";
-        for(int i = 150;i<151;i++){
+        for(int i = 2050;i<2200;i++){
             try {
                 printUrl( MessageFormat.format(uri, i / 1000, i));
                 Thread.sleep(300);
@@ -98,13 +98,13 @@ public class CopyBook {
             boolean result = false;
             if(text.length()<75000){
                 for(int i = 1;i<4;i++){
-                    result = uploadChapter(title,chaName,text);
+                    result = uploadChapter(href,title,chaName,text);
                     if(result)break;
                 }
             }else {
                 for(int j=0;j<text.length()/75000+1;j++){
                     for(int i = 1;i<4;i++){
-                        result = uploadChapter(title,chaName+"("+(j+1)+")",text.substring(j*75000,Math.min((j+1)*75000,text.length()-1)));
+                        result = uploadChapter(href,title,chaName+"("+(j+1)+")",text.substring(j*75000,Math.min((j+1)*75000,text.length()-1)));
                         if(result)break;
                     }
                 }
@@ -127,9 +127,12 @@ public class CopyBook {
             params.add(new BasicNameValuePair("method", "addBook"));
             params.add(new BasicNameValuePair("name", name));
             params.add(new BasicNameValuePair("auth", auth));
+            params.add(new BasicNameValuePair("source", "wenku8"));
+            httpPost.setHeader("User-Agent", "Mozilla");
             httpPost.setEntity(new UrlEncodedFormEntity(params, Consts.UTF_8));
             HttpResponse response = client.execute(httpPost);
             String rs = EntityUtils.toString(response.getEntity(), "GBK");
+            System.out.println("upload:"+rs);
             if(rs.indexOf("添加成功")==-1){
                 return false;
             }
@@ -140,7 +143,7 @@ public class CopyBook {
         return true;
     }
 
-    private static boolean uploadChapter(String name,String chapter,String text) {
+    private static boolean uploadChapter(String url,String name,String chapter,String text) {
         System.out.println("upload:"+name+":"+chapter);
         HttpPost httpPost = new HttpPost("http://magicindexlib.890m.com/upload.php");
         try {
@@ -149,7 +152,9 @@ public class CopyBook {
             params.add(new BasicNameValuePair("book", name));
             params.add(new BasicNameValuePair("chapter", chapter));
             params.add(new BasicNameValuePair("text", text));
+            params.add(new BasicNameValuePair("uri", url));
 
+            httpPost.setHeader("User-Agent", "Mozilla");
             httpPost.setEntity(new UrlEncodedFormEntity(params, Consts.UTF_8));
             HttpResponse response = client.execute(httpPost);
             String rs = EntityUtils.toString(response.getEntity(), "GBK");

@@ -38,7 +38,7 @@ public class UpdateBook {
 
     public static void main(String[] args) {
         String uri = "http://www.wenku8.com/novel/{0}/{1,number,#}/";
-        for(int i = 2030;i>=1;i--){
+        for(int i = 2300;i>=1;i--){
             try {
                 boolean result = false;
                 for(int j = 1;j<4;j++){
@@ -112,6 +112,7 @@ public class UpdateBook {
         try {
             List<NameValuePair> params = new ArrayList<NameValuePair>();
             params.add(new BasicNameValuePair("book", name));
+            params.add(new BasicNameValuePair("source", "wenku8"));
             params.add(new BasicNameValuePair("start", "1"));
             params.add(new BasicNameValuePair("end", "1930"));
             httpPost.setEntity(new UrlEncodedFormEntity(params, Consts.UTF_8));

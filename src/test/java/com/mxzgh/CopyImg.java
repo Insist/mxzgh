@@ -129,6 +129,7 @@ public class CopyImg {
             params.add(new BasicNameValuePair("method", "addBook"));
             params.add(new BasicNameValuePair("name", name));
             params.add(new BasicNameValuePair("auth", auth));
+            httpPost.setHeader("User-Agent", "Mozilla");
             httpPost.setEntity(new UrlEncodedFormEntity(params, Consts.UTF_8));
             HttpResponse response = client.execute(httpPost);
             String rs = EntityUtils.toString(response.getEntity(), "GBK");
@@ -151,6 +152,7 @@ public class CopyImg {
             params.add(new BasicNameValuePair("book", name));
             params.add(new BasicNameValuePair("chapter", chapter));
             params.add(new BasicNameValuePair("text", text));
+            httpPost.setHeader("User-Agent", "Mozilla");
 
             httpPost.setEntity(new UrlEncodedFormEntity(params, Consts.UTF_8));
             HttpResponse response = client.execute(httpPost);

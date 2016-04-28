@@ -33,15 +33,16 @@ public class TestClass {
         System.setProperty("org.apache.commons.logging.simplelog.showdatetime", "true");
         System.setProperty("org.apache.commons.logging.simplelog.log.httpclient.wire.header", "info");
         System.setProperty("org.apache.commons.logging.simplelog.log.org.apache.commons.httpclient", "info");
-        String uri = "http://www.wenku8.com/novel/{0}/{1,number,#}/";
-        for(int i = 1000;i<2202;i++){
-            try {
-                printUrl( MessageFormat.format(uri, i / 1000, i));
-                Thread.sleep(300);
-            }catch (Exception e){
-                e.printStackTrace();
-            }
-        }
+        String uri = "http://xs.dmzj.com/1313/7675/59084_2.shtml";
+        printUrl( uri);
+//        for(int i = 1000;i<2202;i++){
+//            try {
+//                printUrl( MessageFormat.format(uri, i / 1000, i));
+//                Thread.sleep(300);
+//            }catch (Exception e){
+//                e.printStackTrace();
+//            }
+//        }
     }
 
     private static void printUrl( String uri) {
@@ -50,10 +51,12 @@ public class TestClass {
             HttpResponse response = client.execute(httpPost);
             String rs = EntityUtils.toString(response.getEntity(), "GBK");
             Document dom = Jsoup.parse(rs);
-            if(dom==null|| dom.getElementById("title")==null||dom.getElementById("info")==null){
-                return;
-            }
-            System.out.println(MessageFormat.format("<a target=''_blank'' href=''{0}''>{1} {2}</a><br/>", uri, dom.getElementById("title").html(), dom.getElementById("info").html()));
+            String ct = dom.getElementById("novel_contents").html();
+            System.out.println(ct);
+//            if(dom==null|| dom.getElementById("title")==null||dom.getElementById("info")==null){
+//                return;
+//            }
+//            System.out.println(MessageFormat.format("<a target=''_blank'' href=''{0}''>{1} {2}</a><br/>", uri, dom.getElementById("title").html(), dom.getElementById("info").html()));
         } catch (IOException e) {
             e.printStackTrace();
         }
