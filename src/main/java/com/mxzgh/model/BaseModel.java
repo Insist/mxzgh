@@ -1,7 +1,13 @@
 package com.mxzgh.model;
 
+import lombok.Data;
+
 /**
  * Created by Administrator on 2015/12/21.
  */
-public class BaseModel {
+@Data
+public class BaseModel extends BaseResponse {
+
+    private Object data;
+    private String type;
 }

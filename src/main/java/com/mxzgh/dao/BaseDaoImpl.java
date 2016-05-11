@@ -307,6 +307,10 @@ public class BaseDaoImpl<T> implements BaseDao<T> {
         return handler.doInHibernate(getSession());
     }
 
+    public List<Object> executeSqlQuery(String sql) {
+        return getSession().createSQLQuery(sql).list();
+    }
+
     public void execute(String hql) {
         executeUpdate(hql);
     }
@@ -462,6 +466,26 @@ public class BaseDaoImpl<T> implements BaseDao<T> {
             }
         }
         return findList(hql.toString(), conditionMap);
+    }
+
+    public T getByProperty(String name, Object value){
+        String hql = "from  " + entityClazz.getSimpleName() + " where " + name + "=? ";
+        return get(hql, value);
+    }
+
+    public T getByProperty(Map<String, Object> conditionMap){
+        StringBuilder hql = new StringBuilder();
+        hql.append("from  " + entityClazz.getSimpleName());
+        if (!conditionMap.isEmpty()) {
+            Iterator<String> it = conditionMap.keySet().iterator();
+            String key = it.next();
+            hql.append(" where  " + key + "=:" + key);
+            while (it.hasNext()) {
+                key = it.next();
+                hql.append(" and  " + key + "=:" + key);
+            }
+        }
+        return get(hql.toString(), conditionMap);
     }
 
     public <V> List<V> findListByMax(final CharSequence queryString, final int maxResults, final Object... params) {

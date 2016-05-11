@@ -8,31 +8,27 @@ import org.springframework.web.bind.annotation.Mapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 /**
  * Created by Administrator on 2015/11/6.
  */
 @Controller
-@RequestMapping(name="test")
-public class TestController {
+@RequestMapping
+public class HomeController {
 
-    @Autowired
-    private TestService testService;
+    String baseUrl = "http://localhost:8090/";
 
     @RequestMapping("/index")
-    @ResponseBody
     public String index(Long id){
-        TestEntity t = testService.get(id);
-        return t.getName();
-    }
-
-    @RequestMapping("/show")
-    public String show(Long id){
         return "/index";
     }
 
-    @RequestMapping("/demo")
-    public String demo(Long id){
-        return "/demo";
+    @RequestMapping("/game")
+    public String game(Long id,HttpServletRequest req, HttpServletResponse resp){
+        req.setAttribute("baseUrl",baseUrl);
+        return "/game";
     }
 
 }

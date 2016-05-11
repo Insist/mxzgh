@@ -319,6 +319,10 @@ public interface BaseDao<T> {
 
     public List<T> findByProperty(Map<String, Object> conditionMap);
 
+    public T getByProperty(String name, Object value);
+
+    public T getByProperty(Map<String, Object> conditionMap);
+
     /**
      *
      * 查询实体列表

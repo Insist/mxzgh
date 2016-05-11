@@ -1,5 +1,7 @@
 package com.mxzgh.entity;
 
+import lombok.Data;
+
 import javax.persistence.*;
 
 /**
