@@ -37,7 +37,7 @@ public class UserServiceImpl implements UserService {
         String uid = dataMap.get("uid");
         String token = dataMap.get("token");
         Map<String ,Object> map = new HashMap<String, Object>();
-        map.put("id",uid);
+        map.put("id",Long.valueOf(uid));
         map.put("token",token);
         return userDao.getByProperty(map);
     }

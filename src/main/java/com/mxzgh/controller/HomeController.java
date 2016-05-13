@@ -3,6 +3,7 @@ package com.mxzgh.controller;
 import com.mxzgh.entity.TestEntity;
 import com.mxzgh.service.TestService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.Mapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,7 +19,8 @@ import javax.servlet.http.HttpServletResponse;
 @RequestMapping
 public class HomeController {
 
-    String baseUrl = "http://localhost:8090/";
+    @Value("#{configProperties['websocket.base.url']}")
+    String baseUrl = "";
 
     @RequestMapping("/index")
     public String index(Long id){

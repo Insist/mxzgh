@@ -40,4 +40,6 @@
         <property name="suffix" value=".jsp"/>
     </bean>
 
+    <bean id="serviceUtil" class="com.mxzgh.util.ServiceUtil" scope="singleton"></bean>
+
 </beans>

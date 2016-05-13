@@ -3,12 +3,10 @@ package com.mxzgh.controller.websocket;
 import com.mxzgh.entity.UserEntity;
 import com.mxzgh.model.BaseModel;
 import com.mxzgh.model.BaseResponse;
-import com.mxzgh.service.GameService;
-import com.mxzgh.service.UserService;
 import com.mxzgh.util.ChannelUtils;
 import com.mxzgh.util.FasterJsonTools;
+import com.mxzgh.util.ServiceUtil;
 import org.apache.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.websocket.*;
 import javax.websocket.server.ServerEndpoint;
@@ -23,20 +21,12 @@ public class WsController {
     Logger logger = Logger.getLogger(this.getClass());
 
     Session session;
+
     UserEntity user;
-
-    @Autowired
-    UserService userService;
-
-    @Autowired
-    GameService gameService;
 
     @OnOpen
     public void open(Session s) {
-        logger.info(s.getId()+" has login");
         this.session = s;
-//        ChannelUtils.chatChannel.addSession(s.getId(),s);
-//        ChannelUtils.chatChannel.sendMessageToAll(s.getId()+" has login");
     }
     @OnClose
     public void close(CloseReason c) {
@@ -46,7 +36,7 @@ public class WsController {
     }
     @OnMessage
     public String receiveMessage(String message) {
-//        ChannelUtils.chatChannel.sendMessageToAll(message);
+//        ChannelUtils.GAME_CHANNEL.sendMessageToAll(message);
         logger.info("receive Message:"+message);
         Map<String,String> dataMap = FasterJsonTools.readValue2Map(message, String.class, String.class);
         BaseModel baseModel = new BaseModel();
@@ -56,19 +46,37 @@ public class WsController {
     }
 
     public Object handlerMessage(Map<String,String> dataMap){
-        if(dataMap.get("type")==null){
-            return "";
-        }
-        if("auth".equals(dataMap.get("type"))){
-            UserEntity user = userService.checkLogin(dataMap);
-            this.user = user;
-            return user==null?BaseResponse.createResponse(-1,"error"): BaseResponse.SUCCESS;
-        }
-        if("getRooms".equals(dataMap.get("type"))){
-            return gameService.getRooms();
-        }
-        if("createRoom".equals(dataMap.get("type"))){
-            return gameService.createRoom(dataMap,this.user);
+        try {
+            if(dataMap.get("type")==null){
+                return "";
+            }
+            if("auth".equals(dataMap.get("type"))){
+                UserEntity user = ServiceUtil.getUserService().checkLogin(dataMap);
+                this.user = user;
+                logger.info(user.getUsername()+" has login");
+                ChannelUtils.GAME_CHANNEL.addSession(user.getId(),session);
+                return user==null?BaseResponse.createResponse(-1,"error"): BaseResponse.SUCCESS;
+            }
+            if("getRooms".equals(dataMap.get("type"))){
+                return ServiceUtil.getGameService().getRooms();
+            }
+            if("createRoom".equals(dataMap.get("type"))){
+                return ServiceUtil.getGameService().createRoom(dataMap, this.user);
+            }
+            if("joinRoom".equals(dataMap.get("type"))){
+                return ServiceUtil.getGameService().joinRoom(dataMap, this.user);
+            }
+            if("readyRoom".equals(dataMap.get("type"))){
+                return ServiceUtil.getGameService().readyRoom(dataMap, this.user);
+            }
+            if("startRoom".equals(dataMap.get("type"))){
+                return ServiceUtil.getGameService().startRoom(dataMap, this.user);
+            }
+            if("playCard".equals(dataMap.get("type"))){
+                return ServiceUtil.getGameService().playCard(dataMap, this.user);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
         }
         return null;
     }

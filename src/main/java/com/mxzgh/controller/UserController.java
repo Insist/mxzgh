@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.regex.Pattern;
@@ -55,8 +56,11 @@ public class UserController {
         if(user == null){
             return LoginResponse.createResponse(101,"登录错误");
         }
-        return LoginResponse.createSuccessResponse(user.getToken(),user.getId());
+        Cookie token = new Cookie("uno-token",user.getToken());token.setPath("/");
+        Cookie uid = new Cookie("uno-uid",user.getId()+"");uid.setPath("/");
+        resp.addCookie(token);
+        resp.addCookie(uid);
+        return LoginResponse.createSuccessResponse("",0l);
     }
-
 
 }
