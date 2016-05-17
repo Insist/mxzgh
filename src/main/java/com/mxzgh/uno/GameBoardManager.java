@@ -4,6 +4,7 @@ import com.mxzgh.main.Card;
 import com.mxzgh.util.BaseChannel;
 import com.mxzgh.util.ChannelUtils;
 import com.mxzgh.util.UnoCardUtils;
+import org.apache.log4j.Logger;
 
 import javax.websocket.Session;
 import java.util.*;
@@ -16,6 +17,8 @@ import java.util.concurrent.locks.ReentrantLock;
  * Created by Administrator on 2016/5/13.
  */
 public class GameBoardManager implements Runnable {
+
+    private Logger logger = Logger.getLogger(this.getClass());
 
     GameBoardPublic gameBoardPublic = new GameBoardPublic();
     GameBoardPrivate gameBoardPrivate = new GameBoardPrivate();
@@ -85,7 +88,18 @@ public class GameBoardManager implements Runnable {
         do{
             runAction();
         }while(roundEnd());
-//        endRound();
+        endRound();
+    }
+
+    private void endRound() {
+        for(PlayerInfo info:gameBoardPublic.getPlayers()){
+            int score=0;
+            for(UnoCard card:gameBoardPrivate.getPlayerHandCard().get(info.getUserId())){
+                score+=card.score();
+            }
+            info.setScore(info.getScore()+score);
+            this.roomChannel.sendMessageToAll("updatePlayerInfo", info);
+        }
     }
 
     private boolean roundEnd() {
@@ -98,6 +112,8 @@ public class GameBoardManager implements Runnable {
     }
 
     private void initRound() {
+        gameBoardPublic.round++;
+        gameBoardPublic.needAddCard=1;
         gameBoardPrivate.setYamaCards(UnoCardUtils.getNewCards());
         Collections.shuffle(gameBoardPrivate.getYamaCards());
         for(PlayerInfo playerInfo:this.gameBoardPublic.getPlayers()){
@@ -109,11 +125,20 @@ public class GameBoardManager implements Runnable {
             roomChannel.sendMessageToAll("updatePlayerInfo", playerInfo);
         }
         gameBoardPublic.setActionIndex(0);
-        gameBoardPublic.setCenterCard(popCard());
+        while (true){
+            UnoCard card = popCard();
+            if(card.getType()!=13&&card.getType()!=14){
+                gameBoardPublic.getCenterCard().setCard(card);
+                break;
+            }
+            gameBoardPrivate.usedCards.add(card);
+        }
+        roomChannel.sendMessageToAll("updateRound", gameBoardPublic);
         roomChannel.sendMessageToAll("updateCenterCard", gameBoardPublic.getCenterCard());
     }
 
     private void runAction() {
+        gameBoardPublic.autoAction = true;
         Integer actionIndex = gameBoardPublic.getActionIndex();
         PlayerInfo playerInfo = gameBoardPublic.getPlayers().get(actionIndex);
         roomChannel.sendMessage(playerInfo.getUserId(),
@@ -126,9 +151,9 @@ public class GameBoardManager implements Runnable {
         } finally {
             lock.unlock();
         }
-        if(actionIndex==gameBoardPublic.getActionIndex()){
+        if(gameBoardPublic.autoAction){
             Map<String,String> data = new HashMap<>();
-            data.put("action","1");
+            data.put("actionType","1");
             doAction(data, playerInfo.getUserId());
         }
     }
@@ -157,18 +182,44 @@ public class GameBoardManager implements Runnable {
     }
 
     public void doAction(Map<String,String> data,Long userId){
-        String action = data.get("action");
+        String action = data.get("actionType");
         List<UnoCard> handCard = this.gameBoardPrivate.getPlayerHandCard().get(userId);
         PlayerInfo playerInfo = gameBoardPublic.getPlayer(playerIndex.get(userId));
         switch (Integer.valueOf(action)){
             case 0:
                 Integer cardId = Integer.valueOf(data.get("cardId"));
                 UnoCard card = UnoCardUtils.getById(cardId);
-                gameBoardPrivate.usedCards.add(gameBoardPublic.centerCard);
-                gameBoardPublic.centerCard=card;
+                gameBoardPrivate.usedCards.add(UnoCardUtils.getById(gameBoardPublic.centerCard.getId()));
+                gameBoardPublic.centerCard.setCard(card);
+                if(cardId>=100){
+                    gameBoardPublic.centerCard.setTmpColor(Integer.valueOf(data.get("tmpColor")));
+                }
                 handCard.remove(card);
                 playerInfo.setHandCardNum(playerInfo.getHandCardNum() - 1);
+                if(card.getNumber()==10){
+                    this.gameBoardPublic.setActionIndex(getNextIndex());
+                }
+                if(card.getNumber()==11){
+                    this.gameBoardPublic.setDirection(!gameBoardPublic.getDirection());
+                }
+                if(card.getNumber()==12){
+                    if(this.gameBoardPublic.needAddCard==1){
+                        this.gameBoardPublic.needAddCard=2;
+                    }else{
+                        this.gameBoardPublic.needAddCard+=2;
+                    }
+                }
+                if(card.getNumber()==14){
+                    if(this.gameBoardPublic.needAddCard==1){
+                        this.gameBoardPublic.needAddCard=4;
+                    }else{
+                        this.gameBoardPublic.needAddCard+=4;
+                    }
+                }
+
+                this.gameBoardPublic.actionIndex = getNextIndex();
                 this.roomChannel.sendMessageToAll("updatePlayerInfo", gameBoardPublic.getPlayer(playerIndex.get(userId)));
+                this.roomChannel.sendMessageToAll("updateCenterCard", gameBoardPublic.centerCard);
                 this.roomChannel.sendMessage(userId,"updateHandCard", handCard);
                 break;
             case 1:
@@ -177,7 +228,9 @@ public class GameBoardManager implements Runnable {
                 }
                 gameBoardPublic.needAddCard = 1;
                 this.gameBoardPublic.actionIndex = getNextIndex();
+                gameBoardPublic.centerCard.setIsFirst(false);
                 this.roomChannel.sendMessageToAll("updatePlayerInfo", gameBoardPublic.getPlayer(playerIndex.get(userId)));
+                this.roomChannel.sendMessageToAll("updateCenterCard", gameBoardPublic.centerCard);
                 this.roomChannel.sendMessage(userId,"updateHandCard", handCard);
                 break;
             case 2:
@@ -188,6 +241,7 @@ public class GameBoardManager implements Runnable {
     }
 
     public void unlock(){
+        gameBoardPublic.autoAction = false;
         lock.lock();
         try {
             condition.signal();

@@ -1,5 +1,7 @@
 package com.mxzgh.uno;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -11,22 +13,24 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class GameBoardPublic {
 
-    UnoCard centerCard;
+    CenterUnoCard centerCard = new CenterUnoCard();
 
-    Integer round = 1;
+    Integer round = 0;
 
     Integer actionIndex;
 
     Boolean direction = true;
 
+    Boolean autoAction = false;
+
     List<PlayerInfo> players = Collections.synchronizedList(new ArrayList<PlayerInfo>());
     public Integer needAddCard = 1;
 
-    public UnoCard getCenterCard() {
+    public CenterUnoCard getCenterCard() {
         return centerCard;
     }
 
-    public void setCenterCard(UnoCard centerCard) {
+    public void setCenterCard(CenterUnoCard centerCard) {
         this.centerCard = centerCard;
     }
 

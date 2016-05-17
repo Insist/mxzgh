@@ -39,11 +39,18 @@
 
 
 <div id="gameDiv" style="display: none;">
+    局号:<div id="gameRoundNum"></div>
     玩家信息:<div id="gameUsers"></div>
     当前场牌:<div id="centerCard"></div>
     手牌:<div id="handCard"></div>
     操作:<div>
-    <button id="actionBtn_1" class="action" onclick="jumpGame()">跳过</button>
+    <div id="game_select_color" style="display: none;">
+        <button id="colorBtn_1" onclick="selectColor(1)">红</button>
+        <button id="colorBtn_2" onclick="selectColor(2)">绿</button>
+        <button id="colorBtn_3" onclick="selectColor(3)">蓝</button>
+        <button id="colorBtn_4" onclick="selectColor(4)">黄</button>
+    </div>
+    <button id="actionBtn_1" class="action" onclick="runAction(1)">跳过</button>
     <button id="actionBtn_2" class="action" onclick="checkGame()">质疑</button>
     <button id="actionBtn_3" class="action" onclick="judgeGame()">举报</button>
     <button id="actionBtn_4" class="action" onclick="unoGame()">uno</button>
@@ -63,6 +70,7 @@
     var websocket = null;
     var PLAYERS;
     var countDownInterval = 0;
+    var centerCard;
     $(document).ready(function () {
 
         //判断当前浏览器是否支持WebSocket
@@ -127,6 +135,8 @@
                     var userInfo = data.data.players[i];
                     addPlayerHTML(userInfo);
                 }
+            } else if(data.type=="updateRound"){
+                $("#gameRoundNum").html(data.data.round);
             } else if(data.type=="startHandCard" || data.type=="updateHandCard"){
                 $("#handCard").empty();
                 for(i=0;i<data.data.length;i++){
@@ -136,15 +146,47 @@
                 handCards = data.data;
                 disableAllAction();
             } else if(data.type=="updatePlayerInfo"){
-                addPlayerHTML(data.data);
+                updatePlayerHTML(data.data);
             } else if(data.type=="doAction"){
                 countDownSecend = 30;
                 clearInterval(countDownInterval);
                 countDownInterval = setInterval("countDown()",1000);
                 for(i=0;i<handCards.length;i++){
                     o=handCards[i];
-                    if(o.color == centerCard.color || o.number == centerCard.number){
-                        $("#handCard_"+ o.id).removeAttr("disabled");
+                    if(centerCard.type==1) {
+                        if(o.color == centerCard.color || o.number == centerCard.number){
+                            $("#handCard_"+ o.id).removeAttr("disabled");
+                        }else if(o.type==3){
+                            $("#handCard_"+ o.id).removeAttr("disabled");
+                        }
+                    }else if(centerCard.type==2){
+                        if(centerCard.number == 12 && centerCard.isFirst==true){
+                            if(o.number == 12 || o.number == 14){
+                                $("#handCard_"+ o.id).removeAttr("disabled");
+                            }
+                        }else if(o.color == centerCard.color || o.number == centerCard.number){
+                            $("#handCard_"+ o.id).removeAttr("disabled");
+                        }
+                    }else if(centerCard.type==3){
+                        if(centerCard.number == 13){
+                            if(o.color == centerCard.tmpColor){
+                                $("#handCard_"+ o.id).removeAttr("disabled");
+                            }else if(o.type==3){
+                                $("#handCard_"+ o.id).removeAttr("disabled");
+                            }
+                        }else if(centerCard.number == 14){
+                            if(centerCard.isFirst==true){
+                                if(o.number == 14){
+                                    $("#handCard_"+ o.id).removeAttr("disabled");
+                                }
+                            }else{
+                                if(o.color == centerCard.tmpColor){
+                                    $("#handCard_"+ o.id).removeAttr("disabled");
+                                }else if(o.type==3){
+                                    $("#handCard_"+ o.id).removeAttr("disabled");
+                                }
+                            }
+                        }
                     }
                 }
                 for(i=0;i<data.data.length;i++){
@@ -152,15 +194,18 @@
                     $("#actionBtn_"+o).removeAttr("disabled");
                 }
             } else if(data.type="updateCenterCard"){
-                centerCard = data.data;
-                $("#centerCard").html(getCardDescript(centerCard));
+                if(data.data!=null){
+                    centerCard = data.data;
+                    $("#centerCard").html(getCardDescript(centerCard));
+                }
             }
         }
 
         //连接关闭的回调方法
-        websocket.onclose = function () {
+        websocket.onclose = function (evt) {
 //            setMessageInnerHTML("close");
             console.log("socket close");
+            console.log(evt);
             alert("连接断开");
 //            window.location = BASE_URL+"/index.do";
         }
@@ -208,7 +253,11 @@
     }
 
     function addPlayerHTML(playerInfo){
-        $("#gameUsers").append(playerInfo.userName+":"+playerInfo.handCardNum+":"+playerInfo.score+"<br>");
+        $("#gameUsers").append("<div id='game_player_"+playerInfo.index+"'>"+playerInfo.userName+":"+playerInfo.handCardNum+":"+playerInfo.score+"</div>");
+    }
+    function updatePlayerHTML(playerInfo){
+        $("#game_player_"+playerInfo.index).empty();
+        $("#game_player_"+playerInfo.index).append(playerInfo.userName+":"+playerInfo.handCardNum+":"+playerInfo.score);
     }
 
     function addCardHTML(card){
@@ -232,9 +281,13 @@
         }
         if(card.type==3){
             if(card.number == 13){
+                if(card.tmpColor&&card.tmpColor!=0)
+                    return "彩（"+getCardColor(card.tmpColor)+"）";
                 return "彩";
             }
             if(card.number == 14){
+                if(card.tmpColor&&card.tmpColor!=0)
+                    return "彩+4（"+getCardColor(card.tmpColor)+"）";
                 return "彩+4";
             }
         }
@@ -274,8 +327,25 @@
         sendMessage(message);
     }
 
+    var tmpCardId;
     function playCard(id){
-        var message = JSON.stringify({type: "playCard",cardId:id});
+        if(id >= 100){
+            tmpCardId = id;
+            $("#game_select_color").show();
+        } else{
+            var message = JSON.stringify({type: "runAction",actionType:0,cardId:id});
+            sendMessage(message);
+        }
+    }
+
+    function selectColor(color){
+        var message = JSON.stringify({type: "runAction",actionType:0,cardId:tmpCardId,tmpColor:color});
+        sendMessage(message);
+        $("#game_select_color").hide();
+    }
+
+    function runAction(type){
+        var message = JSON.stringify({type: "runAction",actionType:type});
         sendMessage(message);
     }
 

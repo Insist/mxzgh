@@ -90,10 +90,9 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public Object playCard(Map<String, String> dataMap, UserEntity user) {
+    public Object runAction(Map<String, String> dataMap, UserEntity user) {
         Long roomId = ServerManager.USER_MAP.get(user.getId()).getRoomId();
         GameBoardManager manager = ServerManager.GAME_BOARD_MANAGER_MAP.get(roomId);
-        dataMap.put("action","0");
         manager.doAction(dataMap,user.getId());
         manager.unlock();
         return null;

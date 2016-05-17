@@ -5,6 +5,7 @@ import com.mxzgh.service.GameService;
 import com.mxzgh.uno.GameRoom;
 import com.mxzgh.uno.UserModel;
 import com.mxzgh.uno.manager.ServerManager;
+import org.apache.log4j.Logger;
 
 import javax.websocket.Session;
 import java.io.IOException;
@@ -18,6 +19,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class BaseChannel {
 
+    private Logger logger = Logger.getLogger(this.getClass());
+
     Map<Long,Session> sessions = new ConcurrentHashMap<>();
 
     public void addSession(Long key,Session session){
@@ -26,11 +29,7 @@ public class BaseChannel {
 
     public void sendMessageToAll(String message){
         for(Session session:sessions.values()){
-            try {
-                session.getBasicRemote().sendText(message);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            sendMessage(session,message);
         }
     }
 
@@ -44,14 +43,10 @@ public class BaseChannel {
     public void sendMessage(Long id, String type,Object o) {
         Session session = sessions.get(id);
         if(session!=null){
-            try {
-                BaseModel baseModel = new BaseModel();
-                baseModel.setType(type);
-                baseModel.setData(o);
-                session.getBasicRemote().sendText(FasterJsonTools.writeValueAsString(baseModel));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            BaseModel baseModel = new BaseModel();
+            baseModel.setType(type);
+            baseModel.setData(o);
+            sendMessage(session, FasterJsonTools.writeValueAsString(baseModel));
         }
     }
     public void sendMessageToRoom(Long roomId, String type, Object o) {
@@ -63,6 +58,15 @@ public class BaseChannel {
 
     public Session getSessionByUid(Long id) {
         return sessions.get(id);
+    }
+
+    public void sendMessage(Session session,String info){
+        try {
+//            logger.info("send Message"+info);
+            session.getBasicRemote().sendText(info);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }

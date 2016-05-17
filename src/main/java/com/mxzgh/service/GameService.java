@@ -33,5 +33,5 @@ public interface GameService {
 
     Object startRoom(Map<String, String> dataMap, UserEntity user);
 
-    Object playCard(Map<String, String> dataMap, UserEntity user);
+    Object runAction(Map<String, String> dataMap, UserEntity user);
 }

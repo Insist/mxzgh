@@ -10,6 +10,7 @@ import org.apache.log4j.Logger;
 
 import javax.websocket.*;
 import javax.websocket.server.ServerEndpoint;
+import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -30,19 +31,28 @@ public class WsController {
     }
     @OnClose
     public void close(CloseReason c) {
+        logger.warn(c);
     }
     @OnError
     public void error(Throwable t) {
     }
     @OnMessage
-    public String receiveMessage(String message) {
+    public void receiveMessage(String message,Session session) {
+        try {
 //        ChannelUtils.GAME_CHANNEL.sendMessageToAll(message);
-        logger.info("receive Message:"+message);
-        Map<String,String> dataMap = FasterJsonTools.readValue2Map(message, String.class, String.class);
-        BaseModel baseModel = new BaseModel();
-        baseModel.setType(dataMap.get("type"));
-        baseModel.setData(handlerMessage(dataMap));
-        return FasterJsonTools.writeValueAsString(baseModel);
+            logger.info("receive Message:" + message);
+            Map<String,String> dataMap = FasterJsonTools.readValue2Map(message, String.class, String.class);
+            BaseModel baseModel = new BaseModel();
+            baseModel.setType(dataMap.get("type"));
+            baseModel.setData(handlerMessage(dataMap));
+            if(!"runAction".equals(baseModel.getType())){
+                String response = FasterJsonTools.writeValueAsString(baseModel);
+                logger.info("response Message:" + response);
+                session.getAsyncRemote().sendText(response);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public Object handlerMessage(Map<String,String> dataMap){
@@ -72,8 +82,8 @@ public class WsController {
             if("startRoom".equals(dataMap.get("type"))){
                 return ServiceUtil.getGameService().startRoom(dataMap, this.user);
             }
-            if("playCard".equals(dataMap.get("type"))){
-                return ServiceUtil.getGameService().playCard(dataMap, this.user);
+            if("runAction".equals(dataMap.get("type"))){
+                return ServiceUtil.getGameService().runAction(dataMap, this.user);
             }
         }catch (Exception e){
             e.printStackTrace();
